@@ -1,0 +1,151 @@
+{% extends 'recipes/base.html' %}
+{% load static %}
+
+{% block title %}{{ recipe.title }} - Recipe Details{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'recipe_list' %}">My Recipes</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ recipe.title }}</li>
+        </ol>
+    </nav>
+
+    <div class="card recipe-detail-card">
+        {% if recipe.image %}
+            <img src="{{ recipe.image.url }}" class="card-img-top" alt="{{ recipe.title }}" style="max-height: 400px; object-fit: cover;">
+        {% elif recipe.image_url %}
+            <img src="{{ recipe.image_url }}" class="card-img-top" alt="{{ recipe.title }}" style="max-height: 400px; object-fit: cover;">
+        {% else %}
+            <img src="{% static 'recipes/images/placeholder.png' %}" class="card-img-top" alt="Placeholder image" style="max-height: 400px; object-fit: cover;">
+        {% endif %}
+
+        <!-- View Mode -->
+        <div id="view-mode">
+            <div class="card-body">
+                <h1 class="card-title">{{ recipe.title }}</h1>
+                {% comment %}
+                {% if recipe.is_ai_generated %}
+                    <span class="badge bg-info text-dark mb-2">AI Generated</span>
+                {% endif %}
+                {% endcomment %}
+                <p class="card-text text-muted">Created by: {{ recipe.created_by.username }} on {{ recipe.created_at|date:"F j, Y" }}</p>
+                
+                <p class="card-text">{{ recipe.description|linebreaks }}</p>
+
+                <div class="row mt-3 mb-3">
+                    <div class="col-md-4">
+                        <i class="fas fa-clock"></i> <strong>Prep Time:</strong> {{ recipe.prep_time }} minutes
+                    </div>
+                    <div class="col-md-4">
+                        <i class="fas fa-stopwatch"></i> <strong>Cook Time:</strong> {{ recipe.cook_time }} minutes
+                    </div>
+                    <div class="col-md-4">
+                        <i class="fas fa-users"></i> <strong>Servings:</strong> {{ recipe.servings }}
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h3>Ingredients</h3>
+                        <div class="ingredients-list">
+                            {{ recipe.ingredients|linebreaksbr|safe }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h3>Instructions</h3>
+                        <div class="instructions-list">
+                            {{ recipe.instructions|linebreaksbr|safe }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer text-muted">
+                {% if request.user == recipe.created_by %}
+                    <button type="button" class="btn btn-warning me-2" onclick="toggleEditMode()"><i class="fas fa-edit"></i> Edit Recipe</button>
+                    <a href="{% url 'recipe_delete' recipe.id %}" class="btn btn-danger me-2"><i class="fas fa-trash"></i> Delete Recipe</a>
+                {% endif %}
+                <a href="{% url 'recipe_list' %}" class="btn btn-secondary"><i class="fas fa-list"></i> Back to Recipe List</a>
+            </div>
+        </div>
+
+        <!-- Edit Mode -->
+        {% if request.user == recipe.created_by %}
+        <div id="edit-mode" style="display: none;">
+            <form method="post">
+                {% csrf_token %}
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="title" name="title" value="{{ recipe.title }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3">{{ recipe.description }}</textarea>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="prep_time" class="form-label">Prep Time (minutes)</label>
+                            <input type="number" class="form-control" id="prep_time" name="prep_time" value="{{ recipe.prep_time }}" min="0">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="cook_time" class="form-label">Cook Time (minutes)</label>
+                            <input type="number" class="form-control" id="cook_time" name="cook_time" value="{{ recipe.cook_time }}" min="0">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="servings" class="form-label">Servings</label>
+                            <input type="number" class="form-control" id="servings" name="servings" value="{{ recipe.servings }}" min="1">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="image_url" class="form-label">Image URL (Optional)</label>
+                        <input type="url" class="form-control" id="image_url" name="image_url" value="{{ recipe.image_url|default:'' }}">
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="ingredients" class="form-label">Ingredients</label>
+                            <textarea class="form-control" id="ingredients" name="ingredients" rows="10" placeholder="Enter each ingredient on a new line">{{ recipe.ingredients }}</textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="instructions" class="form-label">Instructions</label>
+                            <textarea class="form-control" id="instructions" name="instructions" rows="10" placeholder="Enter each step on a new line">{{ recipe.instructions }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-success me-2"><i class="fas fa-save"></i> Save Changes</button>
+                    <button type="button" class="btn btn-secondary" onclick="toggleEditMode()"><i class="fas fa-times"></i> Cancel</button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if request.user == recipe.created_by %}
+<script>
+    function toggleEditMode() {
+        const viewMode = document.getElementById('view-mode');
+        const editMode = document.getElementById('edit-mode');
+        
+        if (viewMode.style.display === 'none') {
+            viewMode.style.display = 'block';
+            editMode.style.display = 'none';
+        } else {
+            viewMode.style.display = 'none';
+            editMode.style.display = 'block';
+        }
+    }
+</script>
+{% endif %}
+{% endblock %} 

@@ -1,0 +1,171 @@
+{% extends 'recipes/base.html' %}
+{% load static %}
+
+{% block title %}Weekly Meal Plan{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0"><i class="bi bi-calendar-week"></i> Weekly Meal Plan</h2>
+        <a href="{% url 'generate_grocery_list' %}" class="btn btn-primary">
+            <i class="bi bi-cart"></i> Generate Grocery List
+        </a>
+    </div>
+    <p class="lead">{{ start_date|date:"F d" }} - {{ end_date|date:"F d, Y" }}</p>
+    <hr>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover meal-plan-table mb-0">
+                    <thead class="table-light">
+                        <tr class="text-center">
+                            <th scope="col" style="width: 15%;" class="py-3">Day</th>
+                            {% for meal_type_code, meal_type_name in meal_plan_by_day.MON.meals.items %}
+                                <th scope="col" class="py-3">{{ meal_type_name|default_if_none:meal_type_code|title }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for day_code, day_data in meal_plan_by_day.items %}
+                        <tr class="{% if day_code == 'SAT' or day_code == 'SUN' %}table-light{% endif %}">
+                            <th scope="row" class="text-center py-3">
+                                <span class="fw-bold">{{ day_data.name }}</span><br>
+                                <small class="text-muted">{{ day_data.date|date:"M d" }}</small>
+                            </th>
+                            {% for meal_type, plan in day_data.meals.items %}
+                                <td class="p-2">
+                                    {% if plan %}
+                                        <div class="meal-plan-entry card h-100 border-0">
+                                            <div class="d-flex align-items-center p-2">
+                                                <div class="meal-thumbnail me-3">
+                                                    {% if plan.recipe.image %}
+                                                        <img src="{{ plan.recipe.image.url }}" alt="{{ plan.recipe.title }}" 
+                                                            class="rounded" style="width: 60px; height: 60px; object-fit: cover;">
+                                                    {% elif plan.recipe.image_url %}
+                                                        <img src="{{ plan.recipe.image_url }}" alt="{{ plan.recipe.title }}" 
+                                                            class="rounded" style="width: 60px; height: 60px; object-fit: cover;">
+                                                    {% else %}
+                                                        <div class="rounded bg-light d-flex align-items-center justify-content-center" 
+                                                            style="width: 60px; height: 60px;">
+                                                            <i class="bi bi-cup-hot"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="meal-details flex-grow-1">
+                                                    <a href="{% url 'recipe_detail' plan.recipe.id %}" class="text-decoration-none fw-medium">
+                                                        {{ plan.recipe.title|truncatechars:28 }}
+                                                    </a>
+                                                    <div class="text-muted small">
+                                                        <i class="bi bi-clock"></i> {{ plan.recipe.prep_time|add:plan.recipe.cook_time }} min
+                                                    </div>
+                                                </div>
+                                                <form action="{% url 'remove_from_meal_plan' plan.id %}" method="post">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-light text-danger border-0" title="Remove from plan">
+                                                        <i class="bi bi-x-circle-fill"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <div class="add-meal-section text-center p-3">
+                                            <button class="btn btn-sm btn-outline-primary rounded-pill add-meal-btn" 
+                                                    data-bs-toggle="modal" data-bs-target="#addMealModal" 
+                                                    data-day="{{ day_code }}" data-meal-type="{{ meal_type }}" 
+                                                    data-date="{{ day_data.date|date:'Y-m-d' }}">
+                                                <i class="bi bi-plus"></i> Add Recipe
+                                            </button>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{# Modal for Adding Recipe to Meal Plan #}
+<div class="modal fade" id="addMealModal" tabindex="-1" aria-labelledby="addMealModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form action="{% url 'add_to_meal_plan' %}" method="post" id="addMealForm">
+        {% csrf_token %}
+        <input type="hidden" name="day" id="modalDay">
+        <input type="hidden" name="meal_type" id="modalMealType">
+        <input type="hidden" name="date" id="modalDate">
+        
+        <div class="modal-header">
+          <h5 class="modal-title" id="addMealModalLabel">Add Recipe to Meal Plan</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Adding recipe for: <strong id="modalSlotInfo"></strong></p>
+          
+          <div class="mb-3">
+            <label for="recipe_id" class="form-label">Select Recipe:</label>
+            <select class="form-select" id="recipe_id" name="recipe_id" required>
+              <option value="" disabled selected>-- Choose a recipe --</option>
+              {% for recipe in recipes %}
+                <option value="{{ recipe.id }}">{{ recipe.title }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add to Plan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+.meal-plan-table th {
+    vertical-align: middle;
+}
+.meal-plan-entry {
+    transition: all 0.2s ease;
+}
+.meal-plan-entry:hover {
+    background-color: rgba(0,0,0,0.03);
+}
+</style>
+
+{# JavaScript to populate modal fields #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const addMealModal = document.getElementById('addMealModal');
+    if (addMealModal) {
+        addMealModal.addEventListener('show.bs.modal', function (event) {
+            // Button that triggered the modal
+            const button = event.relatedTarget;
+            // Extract info from data-* attributes
+            const day = button.getAttribute('data-day');
+            const mealType = button.getAttribute('data-meal-type');
+            const date = button.getAttribute('data-date');
+            const dayName = button.closest('tr').querySelector('th').querySelector('.fw-bold').textContent.trim();
+
+            // Update the modal's content.
+            const modalTitle = addMealModal.querySelector('.modal-title');
+            const modalDayInput = addMealModal.querySelector('#modalDay');
+            const modalMealTypeInput = addMealModal.querySelector('#modalMealType');
+            const modalDateInput = addMealModal.querySelector('#modalDate');
+            const modalSlotInfo = addMealModal.querySelector('#modalSlotInfo');
+            
+            modalTitle.textContent = `Add Recipe for ${dayName} ${mealType.charAt(0).toUpperCase() + mealType.slice(1)}`;
+            modalDayInput.value = day;
+            modalMealTypeInput.value = mealType;
+            modalDateInput.value = date;
+            modalSlotInfo.textContent = `${dayName} ${mealType.charAt(0).toUpperCase() + mealType.slice(1)} (${date})`;
+        });
+    }
+});
+</script>
+{% endblock %} 

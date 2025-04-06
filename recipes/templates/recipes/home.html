@@ -1,0 +1,91 @@
+{% extends 'recipes/base.html' %}
+
+{% block title %}Home - Recipe Planner{% endblock %}
+
+{% block content %}
+<div class="p-5 mb-4 bg-light rounded-3">
+    <div class="container-fluid py-5">
+        <h1 class="display-5 fw-bold">Recipe Planner</h1>
+        <p class="col-md-8 fs-4">Plan your weekly meals, discover new recipes with AI assistance, and generate shopping lists automatically.</p>
+        {% if user.is_authenticated %}
+        <div class="d-flex gap-3 mt-4">
+            <a href="{% url 'recipe_list' %}" class="btn btn-primary btn-lg px-4">View My Recipes</a>
+            <a href="{% url 'ai_recipe_generator' %}" class="btn btn-success btn-lg px-4">Generate New Recipe</a>
+            <a href="{% url 'meal_plan' %}" class="btn btn-info btn-lg px-4">Plan My Week</a>
+        </div>
+        {% else %}
+        <a href="{% url 'login' %}" class="btn btn-primary btn-lg px-4 mt-3">Log In to Get Started</a>
+        {% endif %}
+    </div>
+</div>
+
+{% if recent_recipes %}
+<div class="container mt-5">
+    <h2 class="mb-4">Recent Recipes</h2>
+    <div class="row">
+        {% for recipe in recent_recipes %}
+        <div class="col-md-4 mb-4">
+            <div class="card recipe-card h-100">
+                {% if recipe.image_url %}
+                <img src="{{ recipe.image_url }}" class="card-img-top" alt="{{ recipe.title }}">
+                {% else %}
+                <div class="bg-light text-center py-5">
+                    <i class="bi bi-image text-secondary" style="font-size: 3rem;"></i>
+                </div>
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ recipe.title }}</h5>
+                    <p class="card-text text-muted">
+                        <small>
+                            <i class="bi bi-clock"></i> Prep: {{ recipe.prep_time }} min | 
+                            <i class="bi bi-fire"></i> Cook: {{ recipe.cook_time }} min
+                        </small>
+                    </p>
+                    <p class="card-text">{{ recipe.description|truncatechars:100 }}</p>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{% url 'recipe_detail' recipe.id %}" class="btn btn-sm btn-outline-primary">View Recipe</a>
+                    {% if recipe.is_ai_generated %}
+                    <span class="badge bg-success ms-2"><i class="bi bi-robot"></i> AI Generated</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="container mt-5">
+    <h2 class="text-center mb-4">How It Works</h2>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-robot text-primary mb-3" style="font-size: 2.5rem;"></i>
+                    <h3 class="card-title h5">Generate Recipes with AI</h3>
+                    <p class="card-text">Use AI to generate custom recipes based on your preferences, dietary restrictions, and available ingredients.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-calendar-week text-success mb-3" style="font-size: 2.5rem;"></i>
+                    <h3 class="card-title h5">Plan Your Week</h3>
+                    <p class="card-text">Organize your weekly meals by assigning recipes to specific days and meal times.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-cart-check text-info mb-3" style="font-size: 2.5rem;"></i>
+                    <h3 class="card-title h5">Generate Shopping Lists</h3>
+                    <p class="card-text">Automatically create organized grocery lists based on your meal plan with smart ingredient combining.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

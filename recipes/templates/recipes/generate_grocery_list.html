@@ -1,0 +1,55 @@
+{% extends 'recipes/base.html' %}
+
+{% block title %}Generate Grocery List{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2><i class="fas fa-shopping-cart"></i> Generate Grocery List</h2>
+    <p class="lead">Select the date range for which you want to generate a grocery list based on your meal plan.</p>
+    <hr>
+
+    <form method="post" action="{% url 'generate_grocery_list' %}">
+        {% csrf_token %}
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="start_date" class="form-label">Start Date</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}" required>
+            </div>
+            <div class="col-md-6">
+                <label for="end_date" class="form-label">End Date</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date|date:'Y-m-d' }}" required>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-success">
+            <i class="fas fa-cogs"></i> Generate List
+        </button>
+        <a href="{% url 'meal_plan' %}" class="btn btn-secondary">Back to Meal Plan</a>
+    </form>
+    
+     {# Add a loading indicator (optional but good UX) #}
+    <div id="loading-indicator-grocery" style="display: none;" class="mt-3 alert alert-info">
+        <i class="fas fa-spinner fa-spin"></i> Generating grocery list, this may take a moment...
+    </div>
+
+</div>
+
+{# Basic JavaScript to show loading indicator on form submit #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const loadingIndicator = document.getElementById('loading-indicator-grocery');
+
+    if (form && loadingIndicator) {
+        form.addEventListener('submit', function() {
+            loadingIndicator.style.display = 'block';
+            const submitButton = form.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            }
+        });
+    }
+});
+</script>
+{% endblock %} 

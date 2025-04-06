@@ -1,0 +1,30 @@
+{% extends 'recipes/base.html' %}
+{% load static %}
+
+{% block title %}Confirm Delete{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-danger text-white">
+            <h3 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Confirm Deletion</h3>
+        </div>
+        <div class="card-body">
+            <p class="lead">Are you sure you want to delete the recipe: <strong>{{ recipe.title }}</strong>?</p>
+            <p class="text-danger">This action cannot be undone.</p>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'recipe_detail' recipe.id %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Yes, Delete Recipe
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

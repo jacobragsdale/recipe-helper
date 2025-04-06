@@ -1,0 +1,55 @@
+{% extends 'recipes/base.html' %}
+
+{% block title %}{% if recipe %}Edit{% else %}Create{% endif %} Recipe{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if recipe %}Edit{% else %}Create{% endif %} Recipe</h2>
+    <hr>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="title" class="form-label">Title</label>
+            <input type="text" class="form-control" id="title" name="title" value="{{ recipe.title|default:'' }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="3">{{ recipe.description|default:'' }}</textarea>
+        </div>
+        <div class="mb-3">
+            <label for="ingredients" class="form-label">Ingredients</label>
+            <textarea class="form-control" id="ingredients" name="ingredients" rows="5" placeholder="Enter each ingredient on a new line">{{ recipe.ingredients|default:'' }}</textarea>
+        </div>
+        <div class="mb-3">
+            <label for="instructions" class="form-label">Instructions</label>
+            <textarea class="form-control" id="instructions" name="instructions" rows="7" placeholder="Enter each step on a new line">{{ recipe.instructions|default:'' }}</textarea>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label for="prep_time" class="form-label">Prep Time (minutes)</label>
+                <input type="number" class="form-control" id="prep_time" name="prep_time" value="{{ recipe.prep_time|default:'' }}" min="0">
+            </div>
+            <div class="col-md-4">
+                <label for="cook_time" class="form-label">Cook Time (minutes)</label>
+                <input type="number" class="form-control" id="cook_time" name="cook_time" value="{{ recipe.cook_time|default:'' }}" min="0">
+            </div>
+            <div class="col-md-4">
+                <label for="servings" class="form-label">Servings</label>
+                <input type="number" class="form-control" id="servings" name="servings" value="{{ recipe.servings|default:'' }}" min="1">
+            </div>
+        </div>
+         <div class="mb-3">
+            <label for="image_url" class="form-label">Image URL (Optional)</label>
+            <input type="url" class="form-control" id="image_url" name="image_url" value="{{ recipe.image_url|default:'' }}">
+        </div>
+        
+        <button type="submit" class="btn btn-primary">{% if recipe %}Update{% else %}Create{% endif %} Recipe</button>
+        {% if recipe %}
+        <a href="{% url 'recipe_detail' recipe.id %}" class="btn btn-secondary">Cancel</a>
+        {% else %}
+        <a href="{% url 'recipe_list' %}" class="btn btn-secondary">Cancel</a>
+        {% endif %}
+    </form>
+</div>
+{% endblock %} 
